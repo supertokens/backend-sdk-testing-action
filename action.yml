@@ -8,6 +8,10 @@ inputs:
   version:
     description: The git ref to clone, usually the FDI version
     required: true
+
+  check-name-suffix:
+    description: Suffix to append to check names (usually matrix values)
+    required: true
   
   path:
     description: Relative path where the repo will be cloned
@@ -53,7 +57,7 @@ runs:
       uses: mikepenz/action-junit-report@v5
       with:
         report_paths: ${{ inputs.path }}/test-results.xml
-        check_name: Backend SDK Tests
+        check_name: Backend SDK Tests ${{ inputs.check-name-suffix }}
         # Include table with all test results in the summary
         detailed_summary: true
         # Group the testcases by test suite in the detailed_summary
