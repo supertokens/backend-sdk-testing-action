@@ -36,8 +36,8 @@ runs:
     - name: Setup directories and envs
       shell: bash
       run: |
-        REPORT_DIR=${{ inputs.path }}/test_report
-        APP_SERVER_LOG_DIR=${{ inputs.path }}/test_report/logs/app-server
+        REPORT_DIR=${{ github.workspace }}/${{ inputs.path }}/test_report
+        APP_SERVER_LOG_DIR=${{ github.workspace }}/${{ inputs.path }}/test_report/logs/app-server
 
         echo "REPORT_DIR=$REPORT_DIR" | tee -a "$GITHUB_OUTPUT" "$GITHUB_ENV"
         echo "APP_SERVER_LOG_DIR=$APP_SERVER_LOG_DIR" | tee -a "$GITHUB_OUTPUT" "$GITHUB_ENV"
