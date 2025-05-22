@@ -36,11 +36,14 @@ runs:
     - name: Setup directories and envs
       shell: bash
       run: |
-        echo "REPORT_DIR=${{ inputs.path }}/test_report" | tee -a "$GITHUB_OUTPUT" "$GITHUB_ENV"
-        echo "APP_SERVER_LOG_DIR=${{ inputs.path }}/test_report/logs/app-server" | tee -a "$GITHUB_OUTPUT" "$GITHUB_ENV"
+        REPORT_DIR=${{ inputs.path }}/test_report
+        APP_SERVER_LOG_DIR=${{ inputs.path }}/test_report/logs/app-server
 
-        mkdir -p ${{ env.REPORT_DIR }}
-        mkdir -p ${{ env.APP_SERVER_LOG_DIR }}
+        echo "REPORT_DIR=$REPORT_DIR" | tee -a "$GITHUB_OUTPUT" "$GITHUB_ENV"
+        echo "APP_SERVER_LOG_DIR=$APP_SERVER_LOG_DIR" | tee -a "$GITHUB_OUTPUT" "$GITHUB_ENV"
+
+        mkdir -p $REPORT_DIR
+        mkdir -p $APP_SERVER_LOG_DIR
 
         # Replace `/` with `__` in check name suffix for artifact names
         VALID_CHECK_NAME=$(echo '${{ inputs.check-name-suffix }}' | sed "s|/|__|g")
