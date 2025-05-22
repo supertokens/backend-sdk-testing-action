@@ -12,11 +12,16 @@ inputs:
   check-name-suffix:
     description: Suffix to append to check names (usually matrix values)
     required: true
-  
+
   path:
     description: Relative path where the repo will be cloned
     required: false
     default: backend-sdk-testing
+
+  app-server-logs:
+    description: Absolute path of SDK server logs.
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -27,6 +32,19 @@ runs:
         repository: supertokens/backend-sdk-testing
         ref: ${{ inputs.version }}
         path: ${{ inputs.path }}
+
+    - name: Setup directories and envs
+      shell: bash
+      run: |
+        echo "REPORT_DIR=${{ inputs.path }}/test_report" | tee -a "$GITHUB_OUTPUT" "$GITHUB_ENV"
+        echo "APP_SERVER_LOG_DIR=${{ inputs.path }}/test_report/logs/app-server" | tee -a "$GITHUB_OUTPUT" "$GITHUB_ENV"
+
+        mkdir -p ${{ env.REPORT_DIR }}
+        mkdir -p ${{ env.APP_SERVER_LOG_DIR }}
+
+        # Replace `/` with `__` in check name suffix for artifact names
+        VALID_CHECK_NAME=$(echo '${{ inputs.check-name-suffix }}' | sed "s|/|__|g")
+        echo "VALID_CHECK_NAME=$VALID_CHECK_NAME" | tee -a "$GITHUB_ENV"
 
     - name: Setup backend-sdk-testing
       working-directory: ${{ inputs.path }}
@@ -44,12 +62,27 @@ runs:
         TEST_MODE: testing
 
     - if: always()
-      name: Fix paths
+      name: Fix report paths, dump report
       working-directory: ${{ inputs.path }}
       shell: bash
       # Doing it in the shell since the Reporter's `transformers` don't seem to work
       # run: sed -i "s|$GITHUB_WORKSPACE/${{ inputs.path }}/test||g" test-results.xml
-      run: sed -i "s|${{ github.workspace }}/${{ inputs.path }}/test||g" test-results.xml
+      run: |
+        sed -i "s|${{ github.workspace }}/${{ inputs.path }}/test||g" test-results.xml
+        cp test-results.xml ${{ env.REPORT_DIR }}
+
+    - if: failure() && inputs.app-server-logs != ''
+      name: Copy app server logs
+      shell: bash
+      run: |
+        cp -r ${{ inputs.app-server-logs }} ${{ env.APP_SERVER_LOG_DIR }}
+
+    - if: failure()
+      name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Backend SDK Tests ${{ env.VALID_CHECK_NAME }}
+        path: ${{ env.REPORT_DIR }}
 
     - if: always()
       name: Reporter
